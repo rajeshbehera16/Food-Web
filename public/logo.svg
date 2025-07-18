@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f97316;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#dc2626;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="utensils" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f3f4f6;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="url(#bg)" stroke="#ffffff" stroke-width="2"/>
+  
+  <!-- Fork (left side) -->
+  <g fill="url(#utensils)">
+    <!-- Fork handle -->
+    <rect x="22" y="38" width="2" height="16" rx="1"/>
+    <!-- Fork tines -->
+    <rect x="20" y="20" width="1.5" height="18" rx="0.75"/>
+    <rect x="22.25" y="18" width="1.5" height="20" rx="0.75"/>
+    <rect x="24.5" y="20" width="1.5" height="18" rx="0.75"/>
+  </g>
+  
+  <!-- Knife (right side) -->
+  <g fill="url(#utensils)">
+    <!-- Knife handle -->
+    <rect x="40" y="38" width="2" height="16" rx="1"/>
+    <!-- Knife blade -->
+    <path d="M39 18 L43 18 L43 38 L39 38 Z" rx="1"/>
+    <!-- Knife edge -->
+    <path d="M37.5 18 L39 20 L39 36 L37.5 38 Z"/>
+  </g>
+  
+  <!-- Chef hat accent -->
+  <ellipse cx="32" cy="15" rx="8" ry="4" fill="url(#utensils)" opacity="0.8"/>
+  <ellipse cx="32" cy="12" rx="6" ry="3" fill="url(#utensils)" opacity="0.9"/>
+  
+  <!-- Decorative dots -->
+  <circle cx="26" cy="32" r="1" fill="url(#utensils)" opacity="0.6"/>
+  <circle cx="32" cy="28" r="1" fill="url(#utensils)" opacity="0.6"/>
+  <circle cx="38" cy="32" r="1" fill="url(#utensils)" opacity="0.6"/>
+</svg>
