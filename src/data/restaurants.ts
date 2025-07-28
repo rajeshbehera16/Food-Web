@@ -187,7 +187,7 @@ export const mockRestaurants: Restaurant[] = [
     cuisine: "Multi Cuisine",
     rating: 4.6,
     deliveryTime: "25-35 min",
-    location: "Andheri West, Mumbai",
+    location: "Andheri West, Bhubaneswar",
     image: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&h=300&fit=crop",
     description: "A variety of Indian and international dishes with bold flavors",
     coordinates: { lat: 19.1197, lng: 72.8466 },
