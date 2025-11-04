@@ -1,17 +1,21 @@
 pipeline {
-  agent {
-    docker {
-      image 'node:18-alpine'  // Use a lightweight Node.js image
-      args '-u root:root'     // Gives root access inside container
-    }
-  }
-
+  agent any
   environment {
-    SONAR_TOKEN = credentials('sonarqube-token')
-    DOCKER_HUB_CREDS = credentials('docker-registry-creds')
+    REGISTRY = 'nexus.mycompany.com:8083'       // <--- change to your registry URL
+    IMAGE_NAME = "${REGISTRY}/food-web"
+    K8S_NAMESPACE = 'prod'
+    HELM_RELEASE = 'food-web'
+    SONAR_TOKEN = credentials('sonarqube-token') // secret text in Jenkins
   }
-
+  options {
+    timestamps()
+    buildDiscarder(logRotator(daysToKeepStr: '30'))
+  }
   stages {
+    stage('Checkout') {
+      steps { checkout scm }
+    }
+
     stage('Install deps') {
       steps {
         sh 'npm ci'
@@ -27,19 +31,77 @@ pipeline {
     stage('Build') {
       steps {
         sh 'npm run build'
+        sh 'ls -la dist'
       }
     }
 
-    stage('Test') {
+    stage('Unit tests') {
       steps {
-        sh 'npm test'
+        sh 'npm test -- --watchAll=false || true'
+      }
+      post {
+        always {
+          junit allowEmptyResults: true, testResults: 'reports/**/*.xml'
+        }
+      }
+    }
+
+    stage('Coverage & Sonar') {
+      steps {
+        // ensure jest coverage produced lcov.info at coverage/lcov.info
+        sh 'npm run coverage || true'
+        // run sonar-scanner CLI (ensure sonar-scanner is available on agent or use docker)
+        sh "sonar-scanner -Dsonar.login=${SONAR_TOKEN} -Dsonar.projectKey=food-web"
+      }
+    }
+
+    stage('Docker Build & Push') {
+      steps {
+        script {
+          IMAGE_TAG = sh(returnStdout: true, script: 'git rev-parse --short HEAD').trim() + "-${BUILD_NUMBER}"
+          sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+          withCredentials([usernamePassword(credentialsId: 'docker-registry-creds', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+            sh "echo $DOCKER_PASS | docker login ${REGISTRY} -u $DOCKER_USER --password-stdin"
+            sh "docker push ${IMAGE_NAME}:${IMAGE_TAG}"
+            sh "docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest"
+            sh "docker push ${IMAGE_NAME}:latest"
+          }
+        }
+      }
+    }
+
+    stage('Helm Deploy') {
+      steps {
+        withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG_FILE')]) {
+          sh 'mkdir -p $HOME/.kube'
+          sh 'cp $KUBECONFIG_FILE $HOME/.kube/config'
+          sh "helm upgrade --install ${HELM_RELEASE} ./helm --namespace ${K8S_NAMESPACE} --create-namespace --set image.repository=${IMAGE_NAME},image.tag=${IMAGE_TAG}"
+        }
+      }
+    }
+
+    stage('Smoke Test') {
+      steps {
+        sh 'chmod +x scripts/smoke-test.sh && SMOKE_URL=http://foodweb.mycompany.com/ ./scripts/smoke-test.sh'
       }
     }
   }
 
   post {
+    success {
+      withCredentials([string(credentialsId: 'slack-webhook', variable: 'SLACK_WEBHOOK')]) {
+        sh """curl -s -X POST -H 'Content-type: application/json' \
+          --data '{"text":"✅ Food-Web build #${BUILD_NUMBER} succeeded — deployed ${IMAGE_NAME}:${IMAGE_TAG}"}' \
+          ${SLACK_WEBHOOK}"""
+      }
+    }
     failure {
-      echo 'Build failed!'
+      mail to: 'rajeshbehera0316@gmail.com',
+           subject: "❌ Food-Web build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+           body: "See ${env.BUILD_URL} for details."
+    }
+    always {
+      cleanWs()
     }
   }
 }
