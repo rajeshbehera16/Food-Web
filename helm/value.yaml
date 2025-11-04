@@ -1,0 +1,25 @@
+replicaCount: 2
+
+image:
+  repository: nexus.mycompany.com:8083/food-web   # <--- change to your registry
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations: {}
+  hosts:
+    - host: foodweb.mycompany.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
