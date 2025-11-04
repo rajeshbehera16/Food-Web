@@ -96,7 +96,7 @@ pipeline {
       }
     }
     failure {
-      mail to: 'dev-team@mycompany.com',
+      mail to: 'rajeshbehera0316@gmail.com',
            subject: "❌ Food-Web build failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
            body: "See ${env.BUILD_URL} for details."
     }
